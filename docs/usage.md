@@ -112,6 +112,11 @@ and need a typed `yes`, or `--yes`.
   over SSH: macOS asks about the removable volume only on the screen.
 - Linux: `m-flasher info` (from the tarball: `./m-flasher info`); `man m-flasher` with the packages.
 
+## Optional MIDI OTA
+
+See [MIDI OTA](midi-ota.md) for the separate native MIDI CLI and exact setup.
+`m-flasher midi firmware PACKAGE.fwsc` uses running firmware, not download mode.
+
 ## Slow USB ports
 
 A full read takes about 1.2 s and a firmware install about 10 s. Some USB

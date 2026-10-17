@@ -16,7 +16,7 @@ access return explicit errors. The operation-denial test also covers the MIDI
 and USB categories, which have no native implementation in this harness.
 
 Both `cfg(test)` and the `offline-tests` feature exclude every project native
-SCSI/USB/macOS adapter, including the macOS helper entrypoint. This happens at
+SCSI/USB/macOS/MIDI adapter, including the macOS helper entrypoint. This happens at
 compilation, before the test harness can invoke anything. The std-only harness
 also forbids unsafe Rust. Injected `Scsi` and `Flash` fakes remain available.
 This is a project adapter boundary, not an OS sandbox for arbitrary code added
@@ -106,3 +106,7 @@ reference mismatch exit codes, protected writer/reader receipt interoperability,
 and the pure planner shared with the existing session path. Native adapters stay
 compiled out. This adds bounded parser/incident fixtures toward #2; it does not
 close the remaining transport, storage/clock or physical failure-model work.
+
+The MIDI codec, immutable package checks and injected-clock transcripts are also in
+the std-only harness. A separate native MIDI entrypoint denial check runs before
+the shared suite. Production MIDI capability queries initialize no native backend.

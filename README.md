@@ -23,6 +23,7 @@ the unit is broken. For Windows, macOS and Linux.
 - **Inspect saved dumps**, compare files and export sanitized recovery diagnostics
   without discovering or connecting a device ([file-only commands](docs/saved-diagnostics.md)).
 - A command line as well as the window.
+- Optional [native MIDI OTA](docs/midi-ota.md) for Felucca FM-1 packages, without Python MIDI dependencies. The MIDI-only CLI is available from successful native MIDI Actions builds; normal release packages retain their existing features until a release explicitly includes MIDI.
 
 ## Getting started
 
