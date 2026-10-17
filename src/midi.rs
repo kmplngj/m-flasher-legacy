@@ -197,8 +197,15 @@ pub struct Pair {
     pub output: String,
 }
 fn base(name: &str) -> &str {
-    name.trim_end_matches(|c: char| c.is_ascii_digit())
-        .trim_end()
+    let name = name.trim_end();
+    match name.rsplit_once(char::is_whitespace) {
+        Some((stem, instance))
+            if !instance.is_empty() && instance.bytes().all(|b| b.is_ascii_digit()) =>
+        {
+            stem.trim_end()
+        }
+        _ => name,
+    }
 }
 /// Select exactly one explicit pair. Never pick the first of multiple units.
 pub fn pair(inputs: &[String], outputs: &[String], s: &Selection) -> Result<Pair> {
@@ -219,11 +226,16 @@ pub fn pair(inputs: &[String], outputs: &[String], s: &Selection) -> Result<Pair
         return Err("need one FM-1 MIDI input; use --port or --in-port and --out-port".into());
     }
     let input = candidates[0];
+    let exact_output = outputs.iter().any(|n| n == input);
     let outs: Vec<_> = outputs
         .iter()
         .filter(|n| match &s.output {
             Some(output) => *n == output,
-            None => *n == input || base(n) == base(input),
+            None if s.port.is_some() => n
+                .to_lowercase()
+                .contains(&s.port.as_ref().unwrap().to_lowercase()),
+            None if exact_output => *n == input,
+            None => base(n) == base(input),
         })
         .collect();
     if outs.len() != 1 {

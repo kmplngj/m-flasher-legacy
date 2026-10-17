@@ -62,6 +62,7 @@ impl Io for Fake {
                     // Device-pull accepts duplicate and unordered ranges unchanged.
                     self.queue.extend([
                         vec![0xf0, 0x7f, 0xf7],
+                        READ_LATE.to_vec(),
                         READ.to_vec(),
                         READ.to_vec(),
                         if self.phase == 0 {
@@ -164,6 +165,35 @@ fn explicitly_pairs_endpoints_and_refuses_ambiguity() {
         .unwrap()
         .output,
         "FM-1 2"
+    );
+    assert!(pair(&names(&["FM-1"]), &names(&["FM-2"]), &Selection::default()).is_err());
+    assert_eq!(
+        pair(
+            &names(&["FM-1"]),
+            &names(&["FM-1", "FM-2"]),
+            &Selection::default()
+        )
+        .unwrap()
+        .output,
+        "FM-1"
+    );
+    let shared = Selection {
+        port: Some("FM-1".into()),
+        ..Selection::default()
+    };
+    assert_eq!(
+        pair(&names(&["FM-1 Input"]), &names(&["FM-1 Output"]), &shared)
+            .unwrap()
+            .output,
+        "FM-1 Output"
+    );
+    assert!(
+        pair(
+            &names(&["FM-1 Input"]),
+            &names(&["FM-1 Output", "FM-1 Other"]),
+            &shared
+        )
+        .is_err()
     );
     let explicit = Selection {
         input: Some("Selected in".into()),
