@@ -207,6 +207,18 @@ fn base(name: &str) -> &str {
         _ => name,
     }
 }
+fn token(name: &str, model: &str) -> bool {
+    name.match_indices(model).any(|(at, _)| {
+        name[..at]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !c.is_alphanumeric())
+            && name[at + model.len()..]
+                .chars()
+                .next()
+                .is_none_or(|c| !c.is_alphanumeric())
+    })
+}
 /// Select exactly one explicit pair. Never pick the first of multiple units.
 pub fn pair(inputs: &[String], outputs: &[String], s: &Selection) -> Result<Pair> {
     let candidates: Vec<_> = inputs
@@ -219,7 +231,7 @@ pub fn pair(inputs: &[String], outputs: &[String], s: &Selection) -> Result<Pair
                 return n.to_lowercase().contains(&port.to_lowercase());
             }
             let lower = n.to_lowercase();
-            lower.contains("fm-1") || lower.contains("felucca")
+            token(&lower, "fm-1") || token(&lower, "felucca")
         })
         .collect();
     if candidates.len() != 1 {
@@ -365,14 +377,15 @@ pub fn install(
     if !id.loader() {
         report("checking package and staging the update loader");
         transfer(io, image, CHECK_DONE, 8, report)?;
-        io.disconnect();
+        // CoreMIDI queues sends: keep both ports alive until the final reply drains.
         io.pause(seconds(3));
+        io.disconnect();
         reconnect(io, s, true, 30)?;
     }
     report("writing firmware through its MIDI loader");
     transfer(io, image, WRITE_DONE, 180, report)?;
-    io.disconnect();
     io.pause(seconds(3));
+    io.disconnect();
     let final_id = reconnect(io, s, false, 40)?;
     if final_id.0 != image.identity {
         return Err(format!(

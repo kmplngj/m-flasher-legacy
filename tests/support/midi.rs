@@ -23,6 +23,8 @@ struct Fake {
     wrong_identity: bool,
     fail_send: bool,
     disconnected: bool,
+    completion_at: Option<Duration>,
+    dropped_early: bool,
 }
 impl Io for Fake {
     fn now(&self) -> Duration {
@@ -35,6 +37,9 @@ impl Io for Fake {
         Ok(())
     }
     fn disconnect(&mut self) {
+        if let Some(when) = self.completion_at.take() {
+            self.dropped_early |= self.tick.saturating_sub(when) < seconds(3);
+        }
         self.queue.clear();
     }
     fn send(&mut self, wire: &[u8]) -> Result<()> {
@@ -76,9 +81,11 @@ impl Io for Fake {
         }
         if frame(wire, 0x30, 23).is_some_and(|d| le32(&d, 7) == CHECK_DONE) {
             self.phase = 1;
+            self.completion_at = Some(self.tick);
         }
         if frame(wire, 0x30, 23).is_some_and(|d| le32(&d, 7) == WRITE_DONE) {
             self.phase = 2;
+            self.completion_at = Some(self.tick);
         }
         Ok(())
     }
@@ -195,6 +202,19 @@ fn explicitly_pairs_endpoints_and_refuses_ambiguity() {
         )
         .is_err()
     );
+    for other in ["FM-10", "FM-123", "SomeFM-1", "FeluccaLike"] {
+        assert!(pair(&names(&[other]), &names(&[other]), &Selection::default()).is_err());
+    }
+    assert_eq!(
+        pair(
+            &names(&["FM-1", "FM-10"]),
+            &names(&["FM-1", "FM-10"]),
+            &Selection::default()
+        )
+        .unwrap()
+        .input,
+        "FM-1"
+    );
     let explicit = Selection {
         input: Some("Selected in".into()),
         output: Some("Selected out".into()),
@@ -217,6 +237,10 @@ fn complete_pull_transcript_preserves_duplicates_and_checks_reboot() {
     install(&mut io, &Selection::default(), &image, &id, &mut |_| {}).unwrap();
     assert_eq!(io.starts, 2);
     assert_eq!(io.phase, 2);
+    assert!(
+        !io.dropped_early,
+        "completion reply dropped before the settling delay"
+    );
     assert_eq!(io.sent.iter().filter(|p| p.as_slice() == REPLY).count(), 4);
 }
 #[test]
@@ -234,6 +258,7 @@ fn existing_loader_resumes_without_restarting_running_stage() {
     )
     .unwrap();
     assert_eq!(io.starts, 1);
+    assert!(!io.dropped_early);
 }
 #[test]
 fn bad_ranges_phase_send_disconnect_and_idle_never_report_success() {
