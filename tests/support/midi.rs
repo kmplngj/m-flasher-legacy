@@ -325,3 +325,25 @@ fn wrong_model_never_sends_upgrade() {
     );
     assert!(io.sent.is_empty());
 }
+
+#[test]
+fn same_version_exchange_does_not_claim_confirmed_replacement() {
+    let mut io = Fake::default();
+    let mut reports = Vec::new();
+    install(
+        &mut io,
+        &Selection::default(),
+        &image(),
+        &Identity("FM-1_906".into()),
+        &mut |message| reports.push(message.to_string()),
+    )
+    .unwrap();
+    assert!(
+        reports
+            .last()
+            .unwrap()
+            .contains("Identity cannot confirm replacement")
+    );
+    assert!(!reports.last().unwrap().starts_with("done:"));
+    assert_eq!(io.starts, 2);
+}

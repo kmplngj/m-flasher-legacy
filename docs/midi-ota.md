@@ -18,10 +18,13 @@ Alternatively, with Rust installed, build the small CLI:
 ```sh
 cargo build --release --locked -p m-flasher-midi
 # Linux build prerequisite: libasound2-dev (or the distribution's ALSA headers).
-target/release/m-flasher --capabilities  # offline, no MIDI initialization
+target/release/m-flasher-midi --capabilities  # offline, no MIDI initialization
 ```
 
-The small CLI binary is also named `m-flasher`, but has only MIDI operations.
+Cargo builds/installs the small CLI as `m-flasher-midi`, keeping it distinct from
+the root GUI/ROM binary. The distributed artifact calls it `m-flasher`; it has
+only MIDI operations. Prefix the commands below with `target/release/m-flasher-midi`
+when running a source build.
 The full GUI/ROM executable can include the same route with `--features midi`.
 Default GUI/ROM builds remain unchanged; capabilities report `midi_ota: false`
 when that adapter is absent. No application is run by the offline tests.
@@ -46,7 +49,8 @@ There is no force option, package identity rewrite, stock detour, bootloader
 operation, settings wipe or automatic ROM fallback. Firmware that refuses the
 same numeric version times out honestly; Felucca versions permitting the same
 version may install it. The post-reboot product/version reply cannot distinguish
-PR commits sharing one version; retain the artifact provenance and inspect the
+PR commits sharing one version. For a same-identity exchange, the CLI explicitly
+reports that identity cannot confirm replacement; retain the artifact provenance and inspect the
 FM-1 ABOUT build commit.
 
 This is ordinary OTA, not #15's fully qualified checkpoint-backed writer. It

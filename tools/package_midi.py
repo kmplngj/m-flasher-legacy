@@ -10,7 +10,8 @@ import subprocess
 
 root = Path(__file__).resolve().parents[1]
 name = 'm-flasher.exe' if os.name == 'nt' else 'm-flasher'
-binary = root / 'target/release' / name
+build_name = 'm-flasher-midi.exe' if os.name == 'nt' else 'm-flasher-midi'
+binary = root / 'target/release' / build_name
 capabilities = json.loads(subprocess.check_output([str(binary), '--capabilities'], text=True))
 if capabilities != {'schema': 1, 'midi_ota': True, 'protocol': 'felucca-device-pull-v1'}:
     raise SystemExit('unexpected MIDI capabilities')

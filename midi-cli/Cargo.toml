@@ -6,7 +6,7 @@ license = "MIT"
 description = "Small native M-Flasher CLI for explicitly selected Felucca MIDI OTA"
 
 [[bin]]
-name = "m-flasher"
+name = "m-flasher-midi"
 path = "../src/midi_main.rs"
 
 [dependencies]

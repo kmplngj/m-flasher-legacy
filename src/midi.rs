@@ -393,10 +393,17 @@ pub fn install(
             final_id.0, image.identity
         ));
     }
-    report(&format!(
-        "done: {} (retain the package provenance to identify the PR commit)",
-        final_id.0
-    ));
+    if id.0 == image.identity {
+        report(&format!(
+            "OTA exchange completed; device reports {} as before. Identity cannot confirm replacement; verify the ABOUT build commit against the package provenance.",
+            final_id.0
+        ));
+    } else {
+        report(&format!(
+            "done: {} (retain the package provenance to identify the PR commit)",
+            final_id.0
+        ));
+    }
     Ok(())
 }
 
