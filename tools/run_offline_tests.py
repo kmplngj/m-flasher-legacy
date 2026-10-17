@@ -60,7 +60,8 @@ def main(argv=None):
                for name in ("scsi", "formats", "boards", "sectormap", "jl",
                             "fmr_reader", "fmr_bot", "fmr_options", "fmr_ipc",
                             "fmr_backup_options", "fmr_backup_ipc", "fmr_job_guard",
-                            "saved_analysis", "saved_options", "saved_receipt", "saved_files")}
+                            "saved_analysis", "saved_options", "saved_receipt", "saved_files",
+                            "midi", "midi_cli")}
     modules["saved_analysis_tests"] = root / "tests" / "support" / "saved_analysis.rs"
     modules["offline_formats"] = root / "tests" / "support" / "offline_formats.rs"
     for name in ("fmr_reader", "fmr_bot", "fmr_options", "fmr_ipc",
@@ -84,6 +85,7 @@ def main(argv=None):
             raise RuntimeError("required guard test missing: " + name)
     # Prove the deliberate forbidden calls before running any shared test.
     run([str(executable), "offline_guard_tests", "--nocapture"], root)
+    run([str(executable), "midi_native_entrypoint_is_denied_offline"], root)
     run([str(executable), "--skip", "offline_guard_tests"], root)
     print("Private firmware corpus: not exercised by the std-only harness; "
           "optional Cargo corpus tests are explicitly ignored.", flush=True)
