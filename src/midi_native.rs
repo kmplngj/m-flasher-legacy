@@ -9,6 +9,10 @@ use std::sync::{
 };
 use std::time::{Duration, Instant};
 
+#[cfg(target_os = "macos")]
+#[path = "midi_macos.rs"]
+mod macos;
+
 pub struct Native {
     epoch: Instant,
     input: Option<MidiInputConnection<()>>,
@@ -41,6 +45,8 @@ impl Io for Native {
     }
     fn connect(&mut self, selection: &Selection) -> Result<()> {
         self.disconnect();
+        #[cfg(target_os = "macos")]
+        macos::refresh_endpoints();
         let mut input = MidiInput::new("M-Flasher OTA input").map_err(|e| e.to_string())?;
         input.ignore(Ignore::None);
         let output = MidiOutput::new("M-Flasher OTA output").map_err(|e| e.to_string())?;

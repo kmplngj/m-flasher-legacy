@@ -41,7 +41,31 @@ The exact port constraints remain in force during loader/reboot re-enumeration;
 use a shared substring such as `FM-1` if names change. Ambiguous pairs are refused.
 `--yes` skips the install confirmation; it does not skip file/device checks.
 
-## Scope and pending hardware validation
+### macOS endpoint refresh
+
+The native CLI services the CoreFoundation event loop on its MIDI client thread
+before enumerating ports. CoreMIDI's process-local source/destination lists can
+otherwise retain the old firmware endpoints through the loader handoff, even
+when USB has already enumerated `Felucca Update`. Sleeping and creating another
+MIDI client do not refresh those lists. The same refresh covers the final reboot.
+
+An opt-in software hotplug diagnostic exercises the production refresh helper:
+
+```sh
+mkdir -p target/midi-hotplug
+rustc --edition=2024 tools/macos_midi_hotplug_probe.rs -o target/midi-hotplug/probe
+target/midi-hotplug/probe --without-fix  # expected failure: new source stays invisible
+target/midi-hotplug/probe                # expected success: refresh reveals the new source
+```
+
+This diagnostic is excluded from the offline test runners. Run it only in a
+separately authorized macOS diagnostic task: it enumerates CoreMIDI sources and
+creates/removes a temporary virtual source. It opens no physical endpoint, sends
+no MIDI and performs no update. A passing result establishes cache refresh, not
+a completed FM-1 installation. Firmware/loader handoff remains a separate device
+check with the exact CLI and firmware artifacts.
+
+## Scope and hardware validation
 
 Only FM-1 packages with the Felucca loader, its exact 0x93000-byte flash image,
 valid FWSC/UFW tables/payload CRCs and valid loader headers/body are accepted.
@@ -68,8 +92,19 @@ Host evidence: independent synthetic package/transcript literals, injected MIDI
 I/O and clock, range/framing/phase/send/disconnect/timeout/identity failures, and
 compile-time denial of native MIDI in tests. These tests exercise no device and
 execute no firmware. #15's checkpoint/transition gates and #16's external writer
-qualification remain open. Real FM-1/macOS MIDI installation of this implementation
-is **pending**, not established by an Actions build or merge.
+qualification remain open.
+
+On 2026-10-19 the owner reported a successful FM-1 OTA exchange on macOS 27.0.1
+arm64 with this endpoint-refresh change, using Felucca PR #477's automatic merge
+build `a188b65b5d604224c1116fbed6abd5131d6e98bc` (Actions run `39257158106`).
+The locally built release CLI was based on `f81a0a4` plus the endpoint-refresh
+change and had SHA-256
+`ca37c44b65cc05ba50c1f2db18a05d10bca4e2478161fcc19edfd1d9dc4c31c2`.
+Its log progressed through loader handoff and at least 2,304 package requests, then
+reconnected to running `FM-1_900`. The owner confirmed that the update worked.
+This establishes that ordinary exchange on that setup; the shared product
+identity does not establish the installed ABOUT commit, sound/controls, data
+preservation or the separate external writer/recovery qualifications.
 
 For a separately authorized ordinary hardware test: connect one FM-1 via USB data
 cable while Felucca is running; stop transport and notes, close other MIDI apps,
